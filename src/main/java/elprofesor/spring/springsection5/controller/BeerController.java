@@ -1,0 +1,68 @@
+package elprofesor.spring.springsection5.controller;
+
+import elprofesor.spring.springsection5.model.BeerDTO;
+import elprofesor.spring.springsection5.services.BeerService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Slf4j
+@RequiredArgsConstructor
+@RestController
+public class BeerController {
+    private final BeerService  beerService;
+    public static final String BEER_PATH = "/api/v1/beer";
+    public static final String BEER_PATH_ID = BEER_PATH + "/{beerId}";
+
+    @PatchMapping(BEER_PATH_ID)
+    public ResponseEntity updateBeerPatchById(@PathVariable("beerId")UUID beerId, @RequestBody BeerDTO beer){
+        beerService.patchBeerById(beerId, beer);
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
+    }
+
+    @DeleteMapping(BEER_PATH_ID)
+    public ResponseEntity deleteBeer(@PathVariable("beerId") UUID beerId){
+        if(! beerService.deleteBeerById(beerId)){
+            throw new NotFoundException();
+        }
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping(BEER_PATH_ID)
+    public ResponseEntity updateBeer(@PathVariable("beerId")UUID beerId, @Validated @RequestBody BeerDTO beer){
+        if(beerService.updateBeerById(beerId, beer).isEmpty()){
+            throw new NotFoundException();
+        }
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
+    }
+
+    @PostMapping(BEER_PATH)
+    public ResponseEntity handlePost(@Validated @RequestBody BeerDTO beer){
+        BeerDTO savedBeer = beerService.saveNewBeer(beer);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Location", "api/v1/beer/" + savedBeer.getId());
+        return new ResponseEntity(headers,HttpStatus.CREATED);
+    }
+
+
+
+    @GetMapping
+    public List<BeerDTO> listBeers(){
+        return beerService.listBeers();
+    }
+
+    @GetMapping( BEER_PATH_ID)
+    public BeerDTO getBeerById(@PathVariable("beerId") UUID beerId){
+        log.debug("Get Beer by id - in controller");
+        return beerService.getBeerById(beerId).orElseThrow(NotFoundException::new);
+    }
+}
