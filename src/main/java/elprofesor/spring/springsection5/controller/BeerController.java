@@ -11,7 +11,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -55,9 +54,9 @@ public class BeerController {
 
 
 
-    @GetMapping
-    public List<BeerDTO> listBeers(){
-        return beerService.listBeers();
+    @GetMapping(BEER_PATH)
+    public List<BeerDTO> listBeers(@RequestParam(required = false) String beerName){
+        return beerService.listBeers(beerName);
     }
 
     @GetMapping( BEER_PATH_ID)
