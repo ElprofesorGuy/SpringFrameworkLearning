@@ -2,30 +2,62 @@ package elprofesor.spring.springsection5.bootstrap;
 
 import elprofesor.spring.springsection5.entities.Beer;
 import elprofesor.spring.springsection5.entities.Customer;
+import elprofesor.spring.springsection5.model.BeerCSVRecord;
 import elprofesor.spring.springsection5.model.BeerDTO;
 import elprofesor.spring.springsection5.model.CustomerDTO;
 import elprofesor.spring.springsection5.repositories.BeerRepository;
 import elprofesor.spring.springsection5.repositories.CustomerRepository;
+import elprofesor.spring.springsection5.services.BeerCsvService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ResourceUtils;
+//import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
-public class BootstrapData implements CommandLineRunner {
+public class   BootstrapData implements CommandLineRunner {
     private final BeerRepository beerRepository;
     private final CustomerRepository customerRepository;
+    private final BeerCsvService beerCsvService;
 
+    @Transactional
     @Override
     public void run(String... args) throws Exception{
         loadBeerData();
+        loadCsvData();
         loadCustomerData();
     }
+
+
+    private void loadCsvData() throws FileNotFoundException {
+        if(beerRepository.count() < 10){
+            File file = ResourceUtils.getFile("classpath:csvdata/beers.csv");
+            List<BeerCSVRecord> rcs = beerCsvService.convertCsv(file);
+
+            rcs.forEach(beerCSVRecord -> {
+                beerRepository.save(Beer.builder()
+                                .beerName(StringUtils.abbreviate(beerCSVRecord.getBeer(),50))
+                                .upc(beerCSVRecord.getRow().toString())
+                                .price(BigDecimal.TEN)
+                                .createDate(LocalDateTime.now())
+                                .updateDate(LocalDateTime.now())
+                                .quantityOnHand(beerCSVRecord.getCount())
+                        .build());
+            });
+        }
+    }
+
 
     private void loadBeerData() {
         if(beerRepository.count() == 0){
@@ -53,7 +85,7 @@ public class BootstrapData implements CommandLineRunner {
                     .quantityOnHand(75)
                     .price(new BigDecimal(12.45))
                     .createDate(LocalDateTime.now())
-                    .createDate(LocalDateTime.now())
+                    .updateDate(LocalDateTime.now())
                     .build();
             beerRepository.save(beer1);
             beerRepository.save(beer2);
@@ -67,21 +99,21 @@ public class BootstrapData implements CommandLineRunner {
             Customer customer1 = Customer.builder()
                     .customerName("El Profesor")
                     .version(3)
-                    .createdDate(LocalDateTime.now())
+                    .createDate(LocalDateTime.now())
                     .updateDate(LocalDateTime.now())
                     .build();
 
             Customer customer2 = Customer.builder()
                     .customerName("La douceur")
                     .version(2)
-                    .createdDate(LocalDateTime.now())
+                    .createDate(LocalDateTime.now())
                     .updateDate(LocalDateTime.now())
                     .build();
 
             Customer customer3 = Customer.builder()
                     .customerName("Divina")
                     .version(1)
-                    .createdDate(LocalDateTime.now())
+                    .createDate(LocalDateTime.now())
                     .updateDate(LocalDateTime.now())
                     .build();
 
