@@ -1,23 +1,35 @@
 package elprofesor.spring.springsection5.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import elprofesor.spring.springsection5.entities.Beer;
 import elprofesor.spring.springsection5.mappers.BeerMapper;
 import elprofesor.spring.springsection5.model.BeerDTO;
 import elprofesor.spring.springsection5.repositories.BeerRepository;
 import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.annotation.Rollback;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultMatcher;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
 class BeerControllerIT {
@@ -29,6 +41,19 @@ class BeerControllerIT {
 
     @Autowired
     BeerMapper beerMapper;
+
+    @Autowired
+    ObjectMapper objectMapper;
+
+    @Autowired
+    WebApplicationContext wac;
+
+    MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp(){
+        mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
+    }
 
     @Test
     void testNotFoundBeerById(){
@@ -46,8 +71,16 @@ class BeerControllerIT {
 
     @Test
     void testListBeer(){
-        List<BeerDTO> dtos = beerController.listBeers();
-        assertThat(dtos.size()).isEqualTo(3);
+        List<BeerDTO> dtos = beerController.listBeers(null);
+        assertThat(dtos.size()).isEqualTo(2413);
+    }
+
+    @Test
+    void testListBeerByName() throws Exception {
+        mockMvc.perform(get(BeerController.BEER_PATH)
+                .queryParam("beerName", "IPA"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()", is(336)));
     }
 
     @Rollback
@@ -57,7 +90,7 @@ class BeerControllerIT {
         beerRepository.deleteAll();
         //System.out.println("Nombre d'éléments dans la BD : " + beerRepository.count());
         //beerRepository.flush();
-        List<BeerDTO> dtos = beerController.listBeers();
+        List<BeerDTO> dtos = beerController.listBeers(null);
         //System.out.println("Nombre d'éléments dans la BD : " + beerRepository.count());
         //System.out.println("Taille de la liste : " + dtos.size());
         assertThat(dtos.size()).isEqualTo(0);
@@ -125,5 +158,24 @@ class BeerControllerIT {
         assertThrows(NotFoundException.class, () -> {
             beerController.deleteBeer(UUID.randomUUID());
         });
+    }
+
+    @Test
+    void testPatchBeerBadName() throws Exception{
+        Beer beer = beerRepository.findAll().get(0);
+        Map<String, Object> beerMap = new HashMap<>();
+        beerMap.put("beerName", "NewName azertyuiopq NewName azertyuiopq NewName azertyuiopq NewName azertyuiopq");
+
+        mockMvc.perform(patch("/api/v1/beer/" + beer.getId())
+                        .accept(MediaType.APPLICATION_JSON)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(beerMap)))
+                .andExpect(status().isBadRequest());
+
+        //verify(beerService).patchBeerById(argumentCaptor.capture(), beerArgumentCaptor.capture());//vérifie que patchBeerById a bien été appelé
+        //et capture les paramètres qui lui ont été envoyés lors de l'appel.
+        //assertThat(beer.getId()).isEqualTo(argumentCaptor.getValue());//vérifie que l'ID envoyé au service est bien celui de l'objet qu'on voulait modifier
+        //assertThat(beerMap.get("beerName")).isEqualTo(beerArgumentCaptor.getValue().getBeerName());//vérifie que le nom de Beer reçu par le service est
+        //bien NewName
     }
 }
