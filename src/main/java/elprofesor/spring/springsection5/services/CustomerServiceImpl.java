@@ -19,7 +19,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .id(UUID.randomUUID())
                 .customerName("El Profesor")
                 .version("1")
-                .createdDate(LocalDateTime.now())
+                .createDate(LocalDateTime.now())
                 .updateDate(LocalDateTime.now())
                 .build();
 
@@ -27,7 +27,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .id(UUID.randomUUID())
                 .customerName("La douceur")
                 .version("2")
-                .createdDate(LocalDateTime.now())
+                .createDate(LocalDateTime.now())
                 .updateDate(LocalDateTime.now())
                 .build();
 
@@ -35,7 +35,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .id(UUID.randomUUID())
                 .customerName("Divina")
                 .version("3")
-                .createdDate(LocalDateTime.now())
+                .createDate(LocalDateTime.now())
                 .updateDate(LocalDateTime.now())
                 .build();
 
@@ -60,7 +60,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .id(UUID.randomUUID())
                 .version(customer.getVersion())
                 .customerName(customer.getCustomerName())
-                .createdDate(LocalDateTime.now())
+                .createDate(LocalDateTime.now())
                 .updateDate(LocalDateTime.now())
                 .build();
 
